@@ -23,7 +23,7 @@ export default function ChatInterface({ category, onCategoryComplete }: ChatInte
     {
       id: '1',
       role: 'ai',
-      content: `Hei! Olen AI-analyytikkosi. Aloitetaan kategoria "${category.name}". \n\nKerro minulle liikeideastasi. Mitä ongelmaa se ratkaisee ja kenelle?`,
+      content: `Hei! Olen AI-analyytikkosi 👋\n\nAloitetaan kategoria "${category.name}". \n\nKerro minulle liikeideastasi. Mitä ongelmaa se ratkaisee ja kenelle?`,
       timestamp: new Date(),
     },
   ]);
@@ -41,10 +41,13 @@ export default function ChatInterface({ category, onCategoryComplete }: ChatInte
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
   const handleSend = async () => {
     if (!input.trim()) return;
 
-    // Add user message
     const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
@@ -59,7 +62,6 @@ export default function ChatInterface({ category, onCategoryComplete }: ChatInte
     setIsTyping(true);
 
     try {
-      // Call AI API
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -75,7 +77,6 @@ export default function ChatInterface({ category, onCategoryComplete }: ChatInte
 
       const data = await response.json();
 
-      // Add AI response
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'ai',
@@ -85,12 +86,10 @@ export default function ChatInterface({ category, onCategoryComplete }: ChatInte
 
       setMessages((prev) => [...prev, aiMessage]);
 
-      // Update collected data
       if (data.extractedData) {
         setCollectedData(data.extractedData);
       }
 
-      // Check if category is complete
       if (data.isComplete) {
         setTimeout(() => {
           onCategoryComplete(data.extractedData);
@@ -119,68 +118,94 @@ export default function ChatInterface({ category, onCategoryComplete }: ChatInte
   };
 
   return (
-    <div className="glass-strong rounded-2xl h-[calc(100vh-20rem)] flex flex-col overflow-hidden shadow-glass">
-      {/* Chat Header */}
-      <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-            <span className="text-xl">🤖</span>
+    <div className="glass-strong rounded-3xl h-[calc(100vh-16rem)] flex flex-col overflow-hidden shadow-glow-hover border border-white/10 animate-scale-in">
+      {/* Premium Chat Header */}
+      <div className="px-8 py-5 border-b border-white/10 glass flex items-center justify-between backdrop-blur-xl">
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <div className="absolute -inset-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl blur opacity-60 animate-pulse-slow"></div>
+            <div className="relative w-12 h-12 bg-gradient-to-br from-purple-500 via-pink-500 to-purple-500 rounded-2xl flex items-center justify-center shadow-glow">
+              <span className="text-2xl">🤖</span>
+            </div>
           </div>
           <div>
-            <h3 className="font-semibold text-white">AI Analyytikko</h3>
-            <p className="text-xs text-green-400 flex items-center space-x-1">
-              <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-              <span>Online</span>
-            </p>
+            <h3 className="font-bold text-white text-lg tracking-tight">AI Analyytikko</h3>
+            <div className="flex items-center gap-2 mt-1">
+              <div className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+              </div>
+              <p className="text-xs text-emerald-400 font-medium">Online & Ready</p>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center space-x-2">
-          <div className="px-3 py-1 rounded-full glass text-xs text-white/60">
-            {messages.length} viestit
+        <div className="flex items-center gap-3">
+          <div className="badge-glow text-xs">
+            {messages.length} {messages.length === 1 ? 'viesti' : 'viestit'}
           </div>
         </div>
       </div>
 
-      {/* Messages Container */}
-      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-        {messages.map((message) => (
+      {/* Messages Container - Premium Scrollable Area */}
+      <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
+        {messages.map((message, index) => (
           <div
             key={message.id}
             className={`
-              flex items-start space-x-3 chat-bubble
-              ${message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''}
+              flex items-end gap-3 chat-bubble
+              ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}
             `}
+            style={{ animationDelay: `${index * 0.05}s` }}
           >
-            {/* Avatar */}
-            <div
-              className={`
-                w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0
-                ${
-                  message.role === 'ai'
-                    ? 'bg-gradient-to-br from-purple-500 to-pink-500'
-                    : 'bg-gradient-to-br from-blue-500 to-cyan-500'
-                }
-              `}
-            >
-              <span className="text-sm">{message.role === 'ai' ? '🤖' : '👤'}</span>
+            {/* Avatar with Glow */}
+            <div className={`
+              relative flex-shrink-0
+              ${message.role === 'user' ? 'order-1' : 'order-0'}
+            `}>
+              <div className={`
+                absolute -inset-1 rounded-2xl blur opacity-50
+                ${message.role === 'ai'
+                  ? 'bg-gradient-to-r from-purple-500 to-pink-500'
+                  : 'bg-gradient-to-r from-blue-500 to-cyan-500'}
+              `}></div>
+              <div
+                className={`
+                  relative w-10 h-10 rounded-2xl flex items-center justify-center shadow-glow
+                  ${
+                    message.role === 'ai'
+                      ? 'bg-gradient-to-br from-purple-500 to-pink-500'
+                      : 'bg-gradient-to-br from-blue-500 to-cyan-500'
+                  }
+                `}
+              >
+                <span className="text-lg">{message.role === 'ai' ? '🤖' : '👤'}</span>
+              </div>
             </div>
 
-            {/* Message Bubble */}
-            <div
-              className={`
-                max-w-[75%] rounded-2xl px-4 py-3 shadow-lg
-                ${
-                  message.role === 'ai'
-                    ? 'glass-strong border border-white/10'
-                    : 'bg-gradient-to-br from-blue-600 to-purple-600'
-                }
-              `}
-            >
-              <p className="text-white text-sm leading-relaxed whitespace-pre-wrap">
-                {message.content}
-              </p>
-              <p className="text-xs text-white/40 mt-2">
+            {/* Message Bubble - Modern Style */}
+            <div className={`
+              flex flex-col gap-1 max-w-[75%]
+              ${message.role === 'user' ? 'items-end' : 'items-start'}
+            `}>
+              <div
+                className={`
+                  px-5 py-4 rounded-3xl shadow-lg transition-all hover:shadow-xl
+                  ${
+                    message.role === 'ai'
+                      ? 'message-ai'
+                      : 'message-user'
+                  }
+                `}
+              >
+                <p className="text-white text-sm leading-relaxed whitespace-pre-wrap font-medium">
+                  {message.content}
+                </p>
+              </div>
+              <p className={`
+                text-xs text-white/30 px-2
+                ${message.role === 'user' ? 'text-right' : 'text-left'}
+              `}>
                 {message.timestamp.toLocaleTimeString('fi-FI', {
                   hour: '2-digit',
                   minute: '2-digit',
@@ -190,13 +215,16 @@ export default function ChatInterface({ category, onCategoryComplete }: ChatInte
           </div>
         ))}
 
-        {/* Typing Indicator */}
+        {/* Premium Typing Indicator */}
         {isTyping && (
-          <div className="flex items-start space-x-3 chat-bubble">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-              <span className="text-sm">🤖</span>
+          <div className="flex items-end gap-3 chat-bubble">
+            <div className="relative">
+              <div className="absolute -inset-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl blur opacity-50"></div>
+              <div className="relative w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-glow">
+                <span className="text-lg">🤖</span>
+              </div>
             </div>
-            <div className="glass-strong rounded-2xl px-4 py-3 border border-white/10">
+            <div className="message-ai px-6 py-4">
               <div className="typing-indicator">
                 <span></span>
                 <span></span>
@@ -209,47 +237,71 @@ export default function ChatInterface({ category, onCategoryComplete }: ChatInte
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Area */}
-      <div className="px-6 py-4 border-t border-white/10">
-        <div className="flex items-end space-x-3">
-          <div className="flex-1 glass rounded-2xl p-3 focus-within:ring-2 focus-within:ring-purple-500/50 transition-all">
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Kirjoita vastauksesi..."
-              rows={1}
-              className="w-full bg-transparent text-white placeholder-white/40 resize-none outline-none text-sm"
-              style={{ minHeight: '24px', maxHeight: '120px' }}
-            />
+      {/* Premium Input Area */}
+      <div className="px-8 py-5 border-t border-white/10 glass backdrop-blur-xl">
+        <div className="flex items-end gap-4">
+          {/* Input Field - Modern Design */}
+          <div className="flex-1 relative group">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl blur opacity-20 group-focus-within:opacity-40 transition"></div>
+            <div className="relative input-premium rounded-2xl p-4 focus-within:border-purple-500/50 transition-all">
+              <textarea
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Kirjoita vastauksesi..."
+                rows={1}
+                className="w-full bg-transparent text-white placeholder-white/30 resize-none outline-none text-sm font-medium leading-relaxed"
+                style={{
+                  minHeight: '24px',
+                  maxHeight: '120px',
+                  overflow: 'auto'
+                }}
+                disabled={isTyping}
+              />
+            </div>
           </div>
 
+          {/* Premium Send Button */}
           <button
             onClick={handleSend}
             disabled={!input.trim() || isTyping}
             className={`
-              px-6 py-3 rounded-2xl font-medium text-sm transition-all duration-300 btn-premium
+              relative px-7 py-4 rounded-2xl font-semibold text-sm transition-all duration-300 btn-premium overflow-hidden group
               ${
                 input.trim() && !isTyping
-                  ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:shadow-glow'
-                  : 'bg-white/10 text-white/40 cursor-not-allowed'
+                  ? 'bg-gradient-to-r from-purple-600 via-pink-600 to-purple-600 hover:shadow-glow text-white shadow-lg hover:scale-105 active:scale-95'
+                  : 'bg-white/5 text-white/30 cursor-not-allowed'
               }
             `}
           >
             {isTyping ? (
-              <div className="w-5 h-5">
-                <div className="spinner w-5 h-5"></div>
+              <div className="flex items-center gap-2">
+                <div className="spinner w-5 h-5 border-2"></div>
               </div>
             ) : (
-              <span>Lähetä →</span>
+              <div className="flex items-center gap-2">
+                <span>Lähetä</span>
+                <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </div>
             )}
           </button>
         </div>
 
-        <p className="text-xs text-white/30 mt-2 text-center">
-          Paina Enter lähettääksesi • Shift+Enter uudelle riville
-        </p>
+        {/* Keyboard Hints */}
+        <div className="flex items-center justify-center mt-3 gap-4">
+          <div className="flex items-center gap-2 text-xs text-white/20">
+            <kbd className="px-2 py-1 bg-white/5 rounded-lg border border-white/10 font-mono">Enter</kbd>
+            <span>lähettää</span>
+          </div>
+          <div className="w-1 h-1 rounded-full bg-white/10"></div>
+          <div className="flex items-center gap-2 text-xs text-white/20">
+            <kbd className="px-2 py-1 bg-white/5 rounded-lg border border-white/10 font-mono">Shift + Enter</kbd>
+            <span>uusi rivi</span>
+          </div>
+        </div>
       </div>
     </div>
   );
