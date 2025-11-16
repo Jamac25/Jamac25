@@ -15,7 +15,7 @@ interface ChatInterfaceProps {
     name: string;
     icon: string;
   };
-  onCategoryComplete: () => void;
+  onCategoryComplete: (data: any) => void;
 }
 
 export default function ChatInterface({ category, onCategoryComplete }: ChatInterfaceProps) {
@@ -29,6 +29,7 @@ export default function ChatInterface({ category, onCategoryComplete }: ChatInte
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [collectedData, setCollectedData] = useState<any>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -51,36 +52,62 @@ export default function ChatInterface({ category, onCategoryComplete }: ChatInte
       timestamp: new Date(),
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
+    const userInput = input;
     setInput('');
     setIsTyping(true);
 
-    // Simulate AI response (replace with actual AI API call later)
-    setTimeout(() => {
+    try {
+      // Call AI API
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: userInput,
+          category: category.id,
+          conversationHistory: updatedMessages,
+          collectedData: collectedData,
+        }),
+      });
+
+      const data = await response.json();
+
+      // Add AI response
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'ai',
-        content: getAIResponse(input, messages.length),
+        content: data.message,
         timestamp: new Date(),
       };
-      setMessages((prev) => [...prev, aiMessage]);
-      setIsTyping(false);
-    }, 1500);
-  };
 
-  // Temporary function - will be replaced with actual AI
-  const getAIResponse = (userInput: string, messageCount: number): string => {
-    // Simulate smart follow-up questions
-    if (messageCount < 4) {
-      return `Kiitos vastauksesta! Kerro lisää: Kuinka suuri on kohderyhmäsi? Onko sinulla jo asiakkaita?`;
-    } else if (messageCount < 6) {
-      return `Hyvä! Vielä muutama kysymys: Mikä on arvioi hintasi? Mitkä ovat suurimmat kilpailijasi?`;
-    } else {
-      // Complete category
-      setTimeout(() => {
-        onCategoryComplete();
-      }, 2000);
-      return `✅ Loistavaa! Sain riittävästi tietoa kategoriasta "${category.name}". Siirrytään seuraavaan!`;
+      setMessages((prev) => [...prev, aiMessage]);
+
+      // Update collected data
+      if (data.extractedData) {
+        setCollectedData(data.extractedData);
+      }
+
+      // Check if category is complete
+      if (data.isComplete) {
+        setTimeout(() => {
+          onCategoryComplete(data.extractedData);
+        }, 2000);
+      }
+
+      setIsTyping(false);
+    } catch (error) {
+      console.error('Error calling AI API:', error);
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'ai',
+        content: 'Pahoittelut, tapahtui virhe. Yritä uudelleen.',
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+      setIsTyping(false);
     }
   };
 

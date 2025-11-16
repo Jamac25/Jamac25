@@ -4,11 +4,19 @@ import { useState } from 'react';
 import ChatInterface from './ChatInterface';
 import ProgressTracker from './ProgressTracker';
 
+interface Category {
+  id: string;
+  name: string;
+  icon: string;
+  completed: boolean;
+}
+
 export default function InterviewWizard() {
   const [currentCategory, setCurrentCategory] = useState(0);
   const [showResults, setShowResults] = useState(false);
+  const [allCollectedData, setAllCollectedData] = useState<any>({});
 
-  const categories = [
+  const [categories, setCategories] = useState<Category[]>([
     { id: 'basics', name: 'Perustiedot', icon: '🎯', completed: false },
     { id: 'market', name: 'Markkinat', icon: '🌍', completed: false },
     { id: 'financials', name: 'Talous', icon: '💰', completed: false },
@@ -16,7 +24,35 @@ export default function InterviewWizard() {
     { id: 'operations', name: 'Operaatiot', icon: '⚙️', completed: false },
     { id: 'risks', name: 'Riskit', icon: '⚠️', completed: false },
     { id: 'growth', name: 'Kasvu', icon: '📈', completed: false },
-  ];
+  ]);
+
+  const handleCategoryComplete = (categoryData: any) => {
+    // Save data from this category
+    const updatedData = {
+      ...allCollectedData,
+      [categories[currentCategory].id]: categoryData,
+    };
+    setAllCollectedData(updatedData);
+
+    // Mark category as completed
+    const updatedCategories = [...categories];
+    updatedCategories[currentCategory].completed = true;
+    setCategories(updatedCategories);
+
+    // Save to localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('startupData', JSON.stringify(updatedData));
+    }
+
+    // Move to next category or show results
+    if (currentCategory < categories.length - 1) {
+      setCurrentCategory(currentCategory + 1);
+    } else {
+      // All categories complete - trigger analysis
+      setShowResults(true);
+      console.log('All data collected:', updatedData);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -131,13 +167,7 @@ export default function InterviewWizard() {
             <div className="lg:col-span-2">
               <ChatInterface
                 category={categories[currentCategory]}
-                onCategoryComplete={() => {
-                  if (currentCategory < categories.length - 1) {
-                    setCurrentCategory(currentCategory + 1);
-                  } else {
-                    setShowResults(true);
-                  }
-                }}
+                onCategoryComplete={handleCategoryComplete}
               />
             </div>
           </div>
