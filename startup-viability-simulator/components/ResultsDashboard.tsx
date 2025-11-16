@@ -2,6 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { analyzeStartup, type AnalysisResults, type StartupData } from '@/lib/analysisEngine';
+import { generatePDFReport } from '@/lib/pdfExport';
+import {
+  ForecastChart,
+  ProfitMarginChart,
+  RiskPieChart,
+  MonteCarloChart,
+  ScenarioChart,
+  CustomerGrowthChart,
+  ViabilityGauge,
+} from './Charts';
 
 interface ResultsDashboardProps {
   data: StartupData;
@@ -86,7 +96,10 @@ export default function ResultsDashboard({ data, onBack }: ResultsDashboardProps
               >
                 {analysis.goNoGo}
               </div>
-              <button className="glass rounded-xl px-4 py-2 hover:bg-white/10 transition-all">
+              <button
+                onClick={() => generatePDFReport(analysis, data)}
+                className="glass rounded-xl px-4 py-2 hover:bg-white/10 transition-all hover:shadow-glow"
+              >
                 📄 Export PDF
               </button>
             </div>
@@ -235,6 +248,23 @@ function YhteenvetoTab({ analysis }: { analysis: AnalysisResults }) {
 function SimulaatioTab({ analysis }: { analysis: AnalysisResults }) {
   return (
     <div className="space-y-6">
+      {/* Charts Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <MonteCarloChart monteCarlo={analysis.monteCarlo} />
+        <ViabilityGauge score={analysis.viabilityScore} />
+      </div>
+
+      <ForecastChart
+        optimistic={analysis.forecasts.optimistic}
+        realistic={analysis.forecasts.realistic}
+        pessimistic={analysis.forecasts.pessimistic}
+      />
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ProfitMarginChart forecasts={analysis.forecasts.realistic} />
+        <CustomerGrowthChart forecasts={analysis.forecasts.realistic} />
+      </div>
+
       <div className="glass-strong rounded-2xl p-8">
         <h2 className="text-3xl font-bold gradient-text mb-6">Monte Carlo Simulation & Forecasts</h2>
 
@@ -368,6 +398,8 @@ function RiskianalyysiTab({ analysis }: { analysis: AnalysisResults }) {
 
   return (
     <div className="space-y-6">
+      <RiskPieChart riskScores={analysis.riskScores} />
+
       <div className="glass-strong rounded-2xl p-8">
         <h2 className="text-3xl font-bold gradient-text mb-6">Risk Analysis</h2>
 
@@ -501,6 +533,8 @@ function StressitestiTab({ analysis }: { analysis: AnalysisResults }) {
 function SkenaariotTab({ analysis }: { analysis: AnalysisResults }) {
   return (
     <div className="space-y-6">
+      <ScenarioChart scenarios={analysis.forecasts.scenarios} />
+
       <div className="glass-strong rounded-2xl p-8">
         <h2 className="text-3xl font-bold gradient-text mb-6">Scenario Analysis</h2>
 
